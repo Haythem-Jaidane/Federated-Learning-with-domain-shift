@@ -99,7 +99,7 @@ if __name__ == '__main__':
             algclass.update_flag(val_loaders)
         else:
             # local client training
-            for wi in range(args.wk_iters):
+            for _ in range(args.wk_iters):
                 for client_idx in range(args.n_clients):
                     algclass.client_train(
                         client_idx, train_loaders[client_idx], a_iter)

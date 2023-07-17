@@ -38,7 +38,7 @@ def evalandprint(args, algclass, train_loaders, val_loaders, test_loaders, SAVE_
         print(f' Saving the local and server checkpoint to {SAVE_PATH}')
         tosave = {'best_epoch': best_epoch, 'best_acc': best_acc, 'best_tacc': np.mean(np.array(best_tacc))}
         for i,tmodel in enumerate(algclass.client_model):
-            tosave['client_model_'+str(i)]=tmodel.state_dict()
+            tosave[f'client_model_{str(i)}'] = tmodel.state_dict()
         tosave['server_model']=algclass.server_model.state_dict()
         torch.save(tosave, SAVE_PATH)
 

@@ -91,8 +91,7 @@ class AlexNet(nn.Module):
             y = self.classifier[5](self.classifier[4](self.classifier[3](
                 self.classifier[2](self.classifier[1](self.classifier[0](x))))))
         else:
-            y = []
-            y.append(x)
+            y = [x]
             x = self.classifier[2](self.classifier[1](self.classifier[0](x)))
             y.append(x)
             x = self.classifier[5](self.classifier[4](self.classifier[3](x)))
@@ -125,13 +124,11 @@ class PamapModel(nn.Module):
         x = self.pool2(self.relu2(self.bn2(x)))
         x = x.reshape(-1, 32 * 44)
         feature = self.fc1_relu(self.fc1(x))
-        out = self.fc2(feature)
-        return out
+        return self.fc2(feature)
 
     def getallfea(self, x):
-        fealist = []
         x = self.conv1(x)
-        fealist.append(x.clone().detach())
+        fealist = [x.clone().detach()]
         x = self.pool1(self.relu1(self.bn1(x)))
         x = self.conv2(x)
         fealist.append(x.clone().detach())
@@ -151,26 +148,23 @@ class PamapModel(nn.Module):
             x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
             x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
             x = x.reshape(-1, 32 * 44)
-            fealist = x
+            return x
         elif plan == 1:
             x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
             x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
             x = x.reshape(-1, 32 * 44)
-            feature = self.fc1_relu(self.fc1(x))
-            fealist = feature
+            return self.fc1_relu(self.fc1(x))
         else:
-            fealist = []
             x = self.conv1(x)
             x = self.pool1(self.relu1(self.bn1(x)))
-            fealist.append(x.view(x.shape[0], -1))
+            fealist = [x.view(x.shape[0], -1)]
             x = self.conv2(x)
             x = self.pool2(self.relu2(self.bn2(x)))
             fealist.append(x.view(x.shape[0], -1))
             x = x.reshape(-1, 32 * 44)
             feature = self.fc1_relu(self.fc1(x))
             fealist.append(feature)
-            fealist = torch.cat(fealist, dim=1)
-        return fealist
+            return torch.cat(fealist, dim=1)
 
 
 class lenet5v(nn.Module):
@@ -208,9 +202,8 @@ class lenet5v(nn.Module):
         return y
 
     def getallfea(self, x):
-        fealist = []
         y = self.conv1(x)
-        fealist.append(y.clone().detach())
+        fealist = [y.clone().detach()]
         y = self.bn1(y)
         y = self.relu1(y)
         y = self.pool1(y)
@@ -236,23 +229,21 @@ class lenet5v(nn.Module):
             x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
             x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
             x = x.view(x.shape[0], -1)
-            fealist = x
+            return x
         elif plan == 1:
             x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
             x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
             x = x.view(x.shape[0], -1)
             x = self.relu3(self.fc1(x))
             x = self.relu4(self.fc2(x))
-            fealist = x
+            return x
         else:
-            fealist = []
             x = self.pool1(self.relu1(self.bn1(self.conv1(x))))
             x = self.pool2(self.relu2(self.bn2(self.conv2(x))))
             x = x.view(x.shape[0], -1)
-            fealist.append(x)
+            fealist = [x]
             x = self.relu3(self.fc1(x))
             fealist.append(x)
             x = self.relu4(self.fc2(x))
             fealist.append(x)
-            fealist = torch.cat(fealist, dim=1)
-        return fealist
+            return torch.cat(fealist, dim=1)
