@@ -15,7 +15,7 @@ def get_data(data_name):
     datalist = {'officehome': 'img_union', 'pacs': 'img_union', 'vlcs': 'img_union', 'medmnist': 'medmnist',
                 'medmnistA': 'medmnist', 'medmnistC': 'medmnist', 'pamap': 'pamap', 'covid': 'covid'}
     if datalist[data_name] not in globals():
-        raise NotImplementedError("Algorithm not found: {}".format(data_name))
+        raise NotImplementedError(f"Algorithm not found: {data_name}")
     return globals()[datalist[data_name]]
 
 
@@ -45,16 +45,10 @@ class mydataset(object):
         self.args = args
 
     def target_trans(self, y):
-        if self.target_transform is not None:
-            return self.target_transform(y)
-        else:
-            return y
+        return self.target_transform(y) if self.target_transform is not None else y
 
     def input_trans(self, x):
-        if self.transform is not None:
-            return self.transform(x)
-        else:
-            return x
+        return self.transform(x) if self.transform is not None else x
 
     def __getitem__(self, index):
         x = self.input_trans(self.loader(self.x[index]))
@@ -85,8 +79,8 @@ class ImageDataset(mydataset):
 
 class MedMnistDataset(Dataset):
     def __init__(self, filename='', transform=None):
-        self.data = np.load(filename+'xdata.npy')
-        self.targets = np.load(filename+'ydata.npy')
+        self.data = np.load(f'{filename}xdata.npy')
+        self.targets = np.load(f'{filename}ydata.npy')
         self.targets = np.squeeze(self.targets)
         self.transform = transform
 
@@ -103,8 +97,8 @@ class MedMnistDataset(Dataset):
 
 class PamapDataset(Dataset):
     def __init__(self, filename='../data/pamap/', transform=None):
-        self.data = np.load(filename+'x.npy')
-        self.targets = np.load(filename+'y.npy')
+        self.data = np.load(f'{filename}x.npy')
+        self.targets = np.load(f'{filename}y.npy')
         self.select_class()
         self.transform = transform
         self.data = torch.unsqueeze(torch.Tensor(self.data), dim=1)
@@ -112,18 +106,14 @@ class PamapDataset(Dataset):
 
     def select_class(self):
         xiaochuclass = [0, 5, 12]
-        index = []
-        for ic in xiaochuclass:
-            index.append(np.where(self.targets == ic)[0])
+        index = [np.where(self.targets == ic)[0] for ic in xiaochuclass]
         index = np.hstack(index)
         allindex = np.arange(len(self.targets))
         allindex = np.delete(allindex, index)
         self.targets = self.targets[allindex]
         self.data = self.data[allindex]
         ry = np.unique(self.targets)
-        ry2 = {}
-        for i in range(len(ry)):
-            ry2[ry[i]] = i
+        ry2 = {ry[i]: i for i in range(len(ry))}
         for i in range(len(self.targets)):
             self.targets[i] = ry2[self.targets[i]]
 
@@ -137,8 +127,8 @@ class PamapDataset(Dataset):
 
 class CovidDataset(Dataset):
     def __init__(self, filename='../data/covid19/', transform=None):
-        self.data = np.load(filename+'xdata.npy')
-        self.targets = np.load(filename+'ydata.npy')
+        self.data = np.load(f'{filename}xdata.npy')
+        self.targets = np.load(f'{filename}ydata.npy')
         self.targets = np.squeeze(self.targets)
         self.transform = transform
         self.data = torch.Tensor(self.data)
@@ -204,14 +194,14 @@ def medmnist(args):
 
 
 def pamap(args):
-    data = PamapDataset(args.root_dir+'pamap/')
+    data = PamapDataset(f'{args.root_dir}pamap/')
     trd, vad, ted = getlabeldataloader(args, data)
     args.num_classes = 10
     return trd, vad, ted
 
 
 def covid(args):
-    data = CovidDataset(args.root_dir+'covid19/')
+    data = CovidDataset(f'{args.root_dir}covid19/')
     trd, vad, ted = getlabeldataloader(args, data)
     args.num_classes = 4
     return trd, vad, ted
@@ -223,9 +213,7 @@ class combinedataset(mydataset):
 
         self.x = np.hstack([np.array(item.x) for item in datal])
         self.targets = np.hstack([item.targets for item in datal])
-        s = ''
-        for item in datal:
-            s += item.dataset+'-'
+        s = ''.join(f'{item.dataset}-' for item in datal)
         s = s[:-1]
         self.dataset = s
         self.transform = datal[0].transform
@@ -234,13 +222,13 @@ class combinedataset(mydataset):
 
 
 def getwholedataset(args):
-    datal = []
-    for item in args.domains:
-        datal.append(ImageDataset(args, args.dataset,
-                     args.root_dir+args.dataset+'/', item))
-    # data=torch.utils.data.ConcatDataset(datal)
-    data = combinedataset(datal, args)
-    return data
+    datal = [
+        ImageDataset(
+            args, args.dataset, args.root_dir + args.dataset + '/', item
+        )
+        for item in args.domains
+    ]
+    return combinedataset(datal, args)
 
 
 def img_union_w(args):
@@ -254,13 +242,13 @@ def medmnist_w(args):
 
 
 def pamap_w(args):
-    data = PamapDataset(args.root_dir+'pamap/')
+    data = PamapDataset(f'{args.root_dir}pamap/')
     args.num_classes = 10
     return data
 
 
 def covid_w(args):
-    data = CovidDataset(args.root_dir+'covid19/')
+    data = CovidDataset(f'{args.root_dir}covid19/')
     args.num_classes = 4
     return data
 
@@ -269,5 +257,5 @@ def get_whole_dataset(data_name):
     datalist = {'officehome': 'img_union_w', 'pacs': 'img_union_w', 'vlcs': 'img_union_w', 'medmnist': 'medmnist_w',
                 'medmnistA': 'medmnist_w', 'medmnistC': 'medmnist_w', 'pamap': 'pamap_w', 'covid': 'covid_w'}
     if datalist[data_name] not in globals():
-        raise NotImplementedError("Algorithm not found: {}".format(data_name))
+        raise NotImplementedError(f"Algorithm not found: {data_name}")
     return globals()[datalist[data_name]]

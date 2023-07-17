@@ -85,11 +85,9 @@ def trainwithteacher(model, data_loader, optimizer, loss_fun, device, tmodel, la
         if not flag:
             with torch.no_grad():
                 for key in tmodel.state_dict().keys():
-                    if 'num_batches_tracked' in key:
-                        pass
-                    elif args.nosharebn and 'bn' in key:
-                        pass
-                    else:
+                    if 'num_batches_tracked' not in key and (
+                        not args.nosharebn or 'bn' not in key
+                    ):
                         model.state_dict()[key].data.copy_(
                             tmodel.state_dict()[key])
     loss_all = 0

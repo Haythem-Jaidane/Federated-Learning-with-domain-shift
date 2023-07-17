@@ -17,9 +17,10 @@ def communication(args, server_model, models, client_weights):
                     for client_idx in range(client_num):
                         models[client_idx].state_dict()[key].data.copy_(server_model.state_dict()[key])
         elif args.alg.lower()=='fedap':
-            tmpmodels=[]
-            for i in range(client_num):
-                tmpmodels.append(copy.deepcopy(models[i]).to(args.device))
+            tmpmodels = [
+                copy.deepcopy(models[i]).to(args.device)
+                for i in range(client_num)
+            ]
             with torch.no_grad():
                 for cl in range(client_num):
                     for key in server_model.state_dict().keys():

@@ -26,10 +26,8 @@ class metafed(torch.nn.Module):
         self.csort = [int(item) for item in args.sort.split('-')]
 
     def init_model_flag(self, train_loaders, val_loaders):
-        self.flagl = []
         client_num = self.args.n_clients
-        for _ in range(client_num):
-            self.flagl.append(False)
+        self.flagl = [False for _ in range(client_num)]
         optimizers = [optim.SGD(params=self.client_model[idx].parameters(
         ), lr=self.args.lr) for idx in range(client_num)]
         for idx in range(client_num):

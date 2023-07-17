@@ -60,7 +60,7 @@ class DataPartitioner(object):
         self.data_size = len(data)
         if type(data) is not Partition:
             self.data = data
-            indices = np.array([x for x in range(0, self.data_size)])
+            indices = np.array(list(range(0, self.data_size)))
         else:
             self.data = data.data
             indices = data.indices
@@ -77,7 +77,7 @@ class DataPartitioner(object):
             lp = len(self.partition_sizes)
             ti = indices[:, 0]
             ttar = indices[:, 1]
-            for i in range(lp):
+            for _ in range(lp):
                 self.partitions.append(np.array([]))
             for c in classes:
                 tindice = np.where(ttar == c)[0]
@@ -158,13 +158,12 @@ class DataPartitioner(object):
         return indices
 
     def _get_consistent_indices(self, indices):
-        if dist.is_initialized():
-            # sync the indices over clients.
-            indices = torch.IntTensor(indices)
-            dist.broadcast(indices, src=0)
-            return list(indices)
-        else:
+        if not dist.is_initialized():
             return indices
+        # sync the indices over clients.
+        indices = torch.IntTensor(indices)
+        dist.broadcast(indices, src=0)
+        return list(indices)
 
     def use(self, partition_ind):
         return Partition(self.data, self.partitions[partition_ind])
@@ -203,7 +202,7 @@ def build_non_iid_by_dirichlet(
         )
         from_index = to_index
 
-    
+
     idx_batch = []
     for _targets in splitted_targets:
         # rebuild _targets.
@@ -246,7 +245,7 @@ def build_non_iid_by_dirichlet(
                         )
                     ]
                     sizes = [len(idx_j) for idx_j in _idx_batch]
-                    min_size = min([_size for _size in sizes])
+                    min_size = min(list(sizes))
                 except ZeroDivisionError:
                     pass
         idx_batch += _idx_batch
@@ -269,14 +268,13 @@ def define_val_dataset(conf, train_dataset):
     partition_sizes = [
         0.4, 0.3, 0.3
     ]
-    data_partitioner = DataPartitioner(
+    return DataPartitioner(
         conf,
         train_dataset,
         partition_sizes,
         partition_type="evenly",
         # consistent_indices=False,
     )
-    return data_partitioner
 
 
 def define_data_loader(conf, dataset, data_partitioner=None):
@@ -300,9 +298,13 @@ def getdataloader(conf, dataall, root_dir='./split/'):
         tmparr = []
         for i in range(conf.n_clients):
             tmppart = define_val_dataset(conf, data_part.use(i))
-            tmparr.append(tmppart.partitions[0])
-            tmparr.append(tmppart.partitions[1])
-            tmparr.append(tmppart.partitions[2])
+            tmparr.extend(
+                (
+                    tmppart.partitions[0],
+                    tmppart.partitions[1],
+                    tmppart.partitions[2],
+                )
+            )
         tmparr = np.array(tmparr)
         np.save(file, tmparr)
     else:

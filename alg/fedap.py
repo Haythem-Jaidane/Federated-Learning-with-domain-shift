@@ -44,10 +44,7 @@ def get_wasserstein(m1, v1, m2, v2, mode='nosquare'):
         tw = 0
         tw += (np.sum(np.square(m1[i]-m2[i])))
         tw += (np.sum(np.square(np.sqrt(v1[i]) - np.sqrt(v2[i]))))
-        if mode == 'square':
-            w += tw
-        else:
-            w += math.sqrt(tw)
+        w += tw if mode == 'square' else math.sqrt(tw)
     return w
 
 
@@ -61,10 +58,7 @@ def get_weight_matrix1(args, bnmlist, bnvlist, client_weights):
             else:
                 tmp = get_wasserstein(
                     bnmlist[i], bnvlist[i], bnmlist[j], bnvlist[j])
-                if tmp == 0:
-                    weight_m[i, j] = 100000000000000
-                else:
-                    weight_m[i, j] = 1/tmp
+                weight_m[i, j] = 100000000000000 if tmp == 0 else 1/tmp
     weight_s = np.sum(weight_m, axis=1)
     weight_s = np.repeat(weight_s, client_num).reshape(
         (client_num, client_num))
@@ -100,8 +94,7 @@ def get_weight_preckpt(args, model, preckpt, trainloadrs, client_weights, device
                 avgmeta.update(nl, tm, tv)
         bnmlist1.append(avgmeta.getmean())
         bnvlist1.append(avgmeta.getvar())
-    weight_m = get_weight_matrix1(args, bnmlist1, bnvlist1, client_weights)
-    return weight_m
+    return get_weight_matrix1(args, bnmlist1, bnvlist1, client_weights)
 
 
 class metacount(object):
